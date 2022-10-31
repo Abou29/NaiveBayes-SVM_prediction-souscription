@@ -21,4 +21,4 @@ Les attributs sont :
 - pdays : number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted)
 - previous : number of contacts performed before this campaign and for this client (numeric)
 - poutcome : outcome of the previous marketing campaign (categorical: 'failure','nonexistent','success')
-- y
+- **y : le client a-t-il souscrit a un service bancaire**
