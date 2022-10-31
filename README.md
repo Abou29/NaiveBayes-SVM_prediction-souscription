@@ -18,7 +18,7 @@ Les attributs sont :
 - month : last contact month of year (categorical: 'jan', 'feb', 'mar', ..., 'nov', 'dec')
 - duration : durée du dernier contact, en secondes (numérique) 
 - campaign : number of contacts performed during this campaign and for this client (numeric, includes last contact)
-- pdays : 
-- previous
-- poutcome
+- pdays : number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted)
+- previous : number of contacts performed before this campaign and for this client (numeric)
+- poutcome : outcome of the previous marketing campaign (categorical: 'failure','nonexistent','success')
 - y
