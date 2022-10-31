@@ -3,7 +3,7 @@ Les données sont liées aux campagnes de marketing d'une institution bancaire p
 
 L'objectif de la classification est de prédire si le client va souscrire (yes/no) à un service bancaire.
 
-Les attributs sont :
+Les variables explicatives sont :
 
 - age : age du client 
 - job : type de job du client (categorical: 'admin.','blue-collar','entrepreneur','housemaid','management','retired','self-employed','services','student','technician','unemployed','unknown')
@@ -21,4 +21,6 @@ Les attributs sont :
 - pdays : number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted)
 - previous : number of contacts performed before this campaign and for this client (numeric)
 - poutcome : outcome of the previous marketing campaign (categorical: 'failure','nonexistent','success')
+
+La variable de sortie : 
 - **y : le client a-t-il souscrit a un service bancaire**
