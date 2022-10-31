@@ -5,8 +5,8 @@ L'objectif de la classification est de prédire si le client va souscrire (yes/n
 
 Les attributs sont :
 
-- age     
-- job
+- age : age du client 
+- job : type de job du client (categorical: 'admin.','blue-collar','entrepreneur','housemaid','management','retired','self-employed','services','student','technician','unemployed','unknown')
 - marital
 - education
 - default
