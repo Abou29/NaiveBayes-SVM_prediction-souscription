@@ -5,6 +5,20 @@ L'objectif de la classification est de prédire si le client va souscrire (yes/n
 
 Les attributs sont :
 
-- age     "job"       "marital"   "education" "default"   "balance"   "housing"  
- [8] "loan"      "contact"   "day"       "month"     "duration"  "campaign"  "pdays"    
-[15] "previous"  "poutcome"  "y"  
+- age     
+- job
+- marital
+- education
+- default
+- balance
+- housing  
+- loan
+- contact 
+- day    
+- month
+- duration
+- campaign
+- pdays 
+- previous
+- poutcome
+- y
