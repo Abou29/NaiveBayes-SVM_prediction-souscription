@@ -1,0 +1,243 @@
+---
+title: "Prédire la souscription d'un client à un service bancaire avec naive bayes et avec svm (support vector machine)"  
+
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Table des matières
+* Load libraries
+* Lecture du fichier de données
+* Recherche d'influence entre quelques variables explicatives avec la variable y (souscription à un service bancaire)
+* Transformation des variables catégorielles en variable numérique
+* Création des jeux de données d'entrainement et de test
+* Normalisation des données
+* Caret - downsample et upsample
+* Prédiction avec naive bayes
+* Prédiction avec naive bayes sur les données downsample
+* Prédiction avec SVM
+* Les variables prédictives les plus importantes  
+<br>
+<br>
+
+
+```{r}
+```
+- Load libraries 
+```{r}
+library("ggplot2")
+library("plotly")
+library("caret")
+```
+
+- Lecture du fichier de données
+```{r}
+bank_data = read.csv("bank.csv", sep = ";")
+dplyr::as_tibble(bank_data)
+```
+  
+
+#### **Recherche d'influence entre quelques variables explicatives avec la variable y (souscription à un service bancaire)**   
+  
+- Recherche d'influence entre la variable duration (durée de l'appel) et la variable y (souscription à un service bancaire) :
+
+```{r}
+graph1 <- ggplot(bank_data, aes(x=y, y=duration, fill=y)) + geom_boxplot()
+graph1 <- graph1 + ggtitle("L'influence de le variable duration (durée de l'appel) sur la variable souscription y") 
+# graph1 <- graph1 + theme(plot.title = element_text(hjust = 0.5)) 
+graph1
+```
+  
+Nous remarquons que plus la variable duration (durée de l'appel)  est grande plus il y a une probabilité que le client souscrit à un service bancaire  
+
+* Recherche d'influence entre la variable age et la variable y (souscription à un service bancaire) :
+```{r}
+graph2 <- ggplot(bank_data, aes(x=y, y=age, fill=y)) + geom_boxplot()
+graph2 <- graph2 + ggtitle("L'influence de le variable age sur la variable souscription y")
+graph2 <- ggplotly(graph2)
+graph2
+```
+  
+Il n'y pas trop une grande différence entre la distribution d'age des souscrits (yes) et celle des non souscrits (no).Apparemment, ce n'est pas l'age qui définit si le client va souscrire à un service bancaire.  
+
+- Recherche d'influence entre la variable contact et la variable y (souscription à un service bancaire) :
+```{r}
+graph3 <- ggplot(bank_data, aes(y, fill=contact)) + geom_bar() 
+graph3 <- graph3 + ggtitle("L'influence de la variable contact sur la variable souscription y")
+graph3
+```
+  
+Peut-etre que la variable contact a un effet sur le fait que le client va souscrire ou non à un service bancaire. On voit qu'il y a plus de chance que le client ne souscrit pas à un service bancaire s'il répond avec un téléphone mobile (cellular). De meme avec un téléphone fixe (telephone).  
+
+- Recherche d'influence entre la variable marital et la variable y (souscription à un service bancaire) :
+```{r}
+graph4 <- ggplot(bank_data, aes(y, fill=marital)) + geom_bar()
+graph4 <- graph4 + ggtitle("L'influence de la varible marital sur la variable souscription y")
+graph4
+```
+  
+Peut-etre que la variable marital a un effet sur le fait que le client va souscrire ou non à un service bancaire. On voit qu'il y a plus de chance que le client ne souscrit pas à un service bancaire s'il est divorcé.  
+
+- Recherche d'influence entre la variable housing et la variable y (souscription à un service bancaire) :
+```{r}
+graph5 <- ggplot(bank_data, aes(y, fill=housing)) + geom_bar()
+graph5 <- graph5 + ggtitle("L'influence de la variable housing sur la variable souscription y")
+graph5 <- graph5 + xlab("y (souscription)")
+graph5
+```
+  
+Peut-etre que la variable housing a un effet sur le fait que le client va souscrire ou non à un service bancaire. On voit qu'il y a plus de chance que le client ne souscrit pas à un service bancaire s'il n'a pas de logement(housing).
+
+- Recherche d'influence entre la variable loan et la variable y (souscription à un service bancaire) : 
+```{r}
+graph6 <- ggplot(bank_data, aes(y, fill=loan)) + geom_bar()
+graph6 <- graph6 + ggtitle("L'influence de la variable loan sur la variable souscription y")
+graph6 <- graph6 + xlab("y (souscription)")
+graph6
+```
+  
+Peut-etre que la variable loan a un effet sur le fait que le client va souscrire ou non à un service bancaire. On voit qu'il y a plus de chance que le client ne souscrit pas à un service bancaire s'il a fait un pret bancaire.  
+
+#### **Transformation des variables catégorielles en variable numérique**
+
+```{r}
+dummy_variables = dummyVars(~., data = bank_data)
+dummy_variables_data = predict(dummy_variables, newdata = bank_data)
+dummy_variables_data = as.data.frame(dummy_variables_data)
+
+dummy_variables_data$"Souscription" = ifelse(dummy_variables_data$"yno" == 1, "No", "Yes")
+dummy_variables_data$"yno" = NULL
+dummy_variables_data$"yyes" = NULL
+```
+
+#### **Création des jeux de données d'entrainement et de test**
+```{r}
+set.seed(3033)
+training_size = floor(0.7*nrow(dummy_variables_data))
+indices = sample(seq_len(nrow(dummy_variables_data)), size = training_size)
+data_bank.train = dummy_variables_data[indices,]
+data_bank.test = dummy_variables_data[-indices,]
+```
+
+```{r}
+dim(data_bank.train)
+```
+
+```{r}
+dim(data_bank.test)
+```
+#### **Normalisation des données**
+```{r}
+data_preprocess_value = preProcess(data_bank.train, method = c("center","scale"))
+data_bank.train.scaled = predict(data_preprocess_value,data_bank.train)
+data_bank.test.scaled = predict(data_preprocess_value,data_bank.test)
+```
+
+#### **Caret - downsample et upsample**
+```{r}
+table(data_bank.train.scaled[,"Souscription"])
+```
+```{r}
+set.seed(3033)
+'%ni%' = Negate("%in%")
+```
+
+```{r}
+# downsample
+data_bank.train.scaled.downsample = downSample(x = data_bank.train.scaled[,colnames(data_bank.train.scaled) %ni% "Souscription"], y = as.factor(data_bank.train.scaled$"Souscription"))
+names(data_bank.train.scaled.downsample)[names(data_bank.train.scaled.downsample) == "Class"]="Souscription"
+```
+
+```{r}
+table(data_bank.train.scaled.downsample[,"Souscription"])
+```
+```{r}
+# upsample
+data_bank.train.scaled.upsample = upSample(x = data_bank.train.scaled[,colnames(data_bank.train.scaled) %ni% "Souscription"], y = as.factor(data_bank.train.scaled$"Souscription"))
+names(data_bank.train.scaled.upsample)[names(data_bank.train.scaled.upsample) == "Class"]="Souscription"
+```
+
+```{r}
+table(data_bank.train.scaled.upsample[,"Souscription"])
+
+```
+#### **Prédiction avec naive bayes**
+- Entrainement du modele
+```{r}
+set.seed(3033)
+trainControl_data = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+naive_bayes_desequilibree = train(Souscription ~., data = data_bank.train.scaled, method='naive_bayes', preProcess = NULL, trControl = trainControl_data)
+```
+
+```{r}
+print(naive_bayes_desequilibree)
+```
+- Prédiction avec notre modèle sur le jeu de données tests
+```{r}
+prediction_naive_bayes_desequilibree = predict(naive_bayes_desequilibree, newdata = data_bank.test.scaled[,-ncol(data_bank.test.scaled)])
+```
+
+- Création de la matrice de confusion
+```{r}
+confusionMatrix(prediction_naive_bayes_desequilibree, as.factor(data_bank.test.scaled[,ncol(data_bank.test.scaled)]))
+```
+#### **Prédiction avec naive bayes sur les données downsample**
+- Entrainement du modele
+```{r}
+set.seed(3033)
+
+trainControl_data = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+
+naive_bayes_downsample = train(Souscription ~., data = data_bank.train.scaled.downsample, method = "naive_bayes", preProcess = NULL, trControl = trainControl_data)
+```
+
+```{r}
+print(naive_bayes_downsample)
+```
+
+- Prédiction avec notre modèle sur le jeu de données tests
+```{r}
+prediction_naive_bayes_downsample = predict(naive_bayes_downsample, newdata = data_bank.test.scaled[,-ncol(data_bank.test.scaled)])
+```
+
+- Création de la matrice de confusion
+```{r}
+confusionMatrix(prediction_naive_bayes_downsample, as.factor(data_bank.test.scaled[,ncol(data_bank.test.scaled)]))
+```
+
+#### **Prédiction avec SVM**
+- Entrainement du modele
+```{r}
+set.seed(3033)
+
+trainControl_data = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+SVM_desequilibree = train(Souscription ~., data = data_bank.train.scaled, method = "svmLinear", preProcess = NULL)
+```
+
+```{r}
+print(SVM_desequilibree)
+```
+
+- Prédiction avec notre modèle sur le jeu de données tests
+```{r}
+prediction_SVM_desequilibree = predict(SVM_desequilibree, newdata = data_bank.test.scaled[,-ncol(data_bank.test.scaled)])
+```
+
+
+- création de la matrice de confusion
+```{r}
+confusionMatrix(prediction_SVM_desequilibree, as.factor(data_bank.test.scaled[,ncol(data_bank.test.scaled)]))
+```
+
+#### **Les variables prédictives les plus importantes**
+```{r}
+varImp(naive_bayes_downsample, scale = F)
+```
+
+
+
